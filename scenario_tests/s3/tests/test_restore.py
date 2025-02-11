@@ -12,12 +12,11 @@ class TestRestore(unittest.TestCase):
     def test_archive_uploaded(self):
         s3_base_path = f"s3://{os.environ.get('BUCKET')}/"
         globals_dump_archive = 'globals.sql'
-        dump_prefix = os.environ.get('DUMPPREFIX')
         db_name = 'gis'
 
         current_archive = datetime.now().strftime(
-            f"%Y/%B/"
-            f"{dump_prefix}_{db_name}.%d-%B-%Y.dmp")
+            f"%Y/%m/"
+            f"{db_name}_latest.dmp.gz")
 
         proc = subprocess.run([
             's3cmd',

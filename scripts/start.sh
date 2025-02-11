@@ -78,9 +78,9 @@ if [ -z "${POSTGRES_USER}" ]; then
   POSTGRES_USER=docker
 fi
 
-file_env 'POSTGRES_PASS'
-if [ -z "${POSTGRES_PASS}" ]; then
-  POSTGRES_PASS=docker
+file_env 'POSTGRES_PASSWORD'
+if [ -z "${POSTGRES_PASSWORD}" ]; then
+  POSTGRES_PASSWORD=docker
 fi
 
 if [ -z "${POSTGRES_PORT}" ]; then
@@ -89,10 +89,6 @@ fi
 
 if [ -z "${POSTGRES_HOST}" ]; then
   POSTGRES_HOST=db
-fi
-
-if [ -z "${DUMPPREFIX}" ]; then
-  DUMPPREFIX=PG
 fi
 
 if [ -z "${ARCHIVE_FILENAME}" ]; then
@@ -112,10 +108,10 @@ fi
 # How old can files and dirs be before getting trashed? In minutes
 if [ -z "${DBLIST}" ]; then
 
-  until PGPASSWORD=${POSTGRES_PASS} pg_isready ${PG_CONN_PARAMETERS}; do
+  until PGPASSWORD=${POSTGRES_PASSWORD} pg_isready ${PG_CONN_PARAMETERS}; do
     sleep 1
   done
-  DBLIST=$(PGPASSWORD=${POSTGRES_PASS} psql ${PG_CONN_PARAMETERS} -l | awk '$1 !~ /[+(|:]|Name|List|template|postgres/ {print $1}')
+  DBLIST=$(PGPASSWORD=${POSTGRES_PASSWORD} psql ${PG_CONN_PARAMETERS} -l | awk '$1 !~ /[+(|:]|Name|List|template|postgres/ {print $1}')
 fi
 
 if [ -z "${RUN_ONCE}" ]; then
@@ -203,10 +199,9 @@ export SSL_SECURE=\"${SSL_SECURE}\"
 export DUMP_ARGS=\"${DUMP_ARGS}\"
 export RESTORE_ARGS=\"${RESTORE_ARGS}\"
 export POSTGRES_USER=\"${POSTGRES_USER}\"
-export POSTGRES_PASS=\"$POSTGRES_PASS\"
+export POSTGRES_PASSWORD=\"$POSTGRES_PASSWORD\"
 export POSTGRES_PORT="${POSTGRES_PORT}"
 export POSTGRES_HOST=\"${POSTGRES_HOST}\"
-export DUMPPREFIX=\"${DUMPPREFIX}\"
 export ARCHIVE_FILENAME=\"${ARCHIVE_FILENAME}\"
 export REMOVE_BEFORE="${REMOVE_BEFORE}"
 export RUN_ONCE="${RUN_ONCE}"
