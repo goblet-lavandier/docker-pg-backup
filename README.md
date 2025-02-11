@@ -18,8 +18,8 @@ It is primarily intended to be used with our [docker postgis](https://github.com
 docker image. By default, it will create a backup once per night (at 23h00)in a
 nicely ordered directory by a year / month.
 
-* Visit our page on the docker hub at: [https://hub.docker.com/r/kartoza/pg-backup](https://registry.hub.docker.com/r/kartoza/pg-backup)
-* Visit our page on GitHub at: https://github.com/kartoza/docker-pg-backup
+* Visit our page on the docker hub at: [https://hub.docker.com/r/golav/pg-backup](https://registry.hub.docker.com/r/golav/pg-backup)
+* Visit our page on GitHub at: https://github.com/goblet-lavandier/docker-pg-backup
 
 
 ## Getting the image
@@ -32,7 +32,7 @@ get our docker trusted build like this:
 
 
 ```
-docker pull kartoza/pg-backup:$POSTGRES_MAJOR_VERSION-$POSTGIS_MAJOR_VERSION.${POSTGIS_MINOR_RELEASE}
+docker pull golav/pg-backup:$POSTGRES_MAJOR_VERSION-$POSTGIS_MAJOR_VERSION.${POSTGIS_MINOR_RELEASE}
 ```
 
 Where the environment variables are
@@ -43,14 +43,14 @@ POSTGIS_MINOR_RELEASE=5
 ```
 
 We highly suggest that you use a tagged image that match the PostgreSQL image you are running i.e
-(kartoza/pg-backup:17-3.5 for backing up kartoza/postgis:17-3.5 DB). The
+(golav/pg-backup:17-3.5 for backing up kartoza/postgis:17-3.5 DB). The
 latest tag  may change and may not successfully back up your database. 
 
 
 To build the image yourself do:
 
 ```
-git clone https://github.com/kartoza/docker-pg-backup.git
+git clone https://github.com/goblet-lavandier/docker-pg-backup.git
 cd docker-pg-backup
 ./build.sh # It will build the latest version corresponding the latest PostgreSQL version
 ```
@@ -65,7 +65,7 @@ POSTGRES_MAJOR_VERSION=17
 POSTGIS_MAJOR_VERSION=3
 POSTGIS_MINOR_RELEASE=5 
 docker run --name "db"  -p 25432:5432 -d -t kartoza/postgis:$POSTGRES_MAJOR_VERSION-$POSTGIS_MAJOR_VERSION.${POSTGIS_MINOR_RELEASE}
-docker run --name="backups"  --link db:db -v `pwd`/backups:/backups  -d kartoza/pg-backup:$POSTGRES_MAJOR_VERSION-$POSTGIS_MAJOR_VERSION.${POSTGIS_MINOR_RELEASE}
+docker run --name="backups"  --link db:db -v `pwd`/backups:/backups  -d golav/pg-backup:$POSTGRES_MAJOR_VERSION-$POSTGIS_MAJOR_VERSION.${POSTGIS_MINOR_RELEASE}
 ```
 
 ## Specifying environment variables
@@ -75,7 +75,7 @@ You can also use the following environment variables to pass a
 username and password etc for the database connection.
 
 * `POSTGRES_USER` if not set, defaults to : docker
-* `POSTGRES_PASS` if not set, defaults to : docker
+* `POSTGRES_PASSWORD` if not set, defaults to : docker
 * `POSTGRES_PORT` if not set, defaults to : 5432
 * `POSTGRES_HOST` if not set, defaults to : db
 * `ARCHIVE_FILENAME` you can use your specified filename format here, default to empty, which 
@@ -100,7 +100,7 @@ midnight daily.
 need to provide the variable as a quoted string i.e ${CRON_SCHEDULE}='*/1 * * * *' 
 or ${CRON_SCHEDULE}="*/1 * * * *" 
 
-Here is a more typical example using [docker-composer](https://github.com/kartoza/docker-pg-backup/blob/master/docker-compose.yml):
+Here is a more typical example using [docker-composer](https://github.com/goblet-lavandier/docker-pg-backup/blob/master/docker-compose.yml):
 
 
 ### Filename format
@@ -109,14 +109,14 @@ The default backup archive generated will be stored in the `/backups` directory
 (inside the container):
 
 ```
-/backups/$(date +%Y)/$(date +%B)/${DUMPPREFIX}_${DB}.$(date +%d-%B-%Y).dmp
+/backups/$(date +%Y)/$(date +%m)/${DB}_$(date +%Y%m%d_%H%M%S).dmp
 ```
 
-As a concrete example, with `DUMPPREFIX=PG` and if your postgis has DB name `gis`.
+As a concrete example if your postgis has DB name `gis`.
 The backup archive would be something like:
 
 ```
-/backups/2019/February/PG_gis.17-February-2019.dmp
+/backups/2019/02/gis_20190217_214712.dmp
 ```
 
 If you specify `ARCHIVE_FILENAME` instead (default value is empty). The
@@ -125,7 +125,7 @@ Let's assume `ARCHIVE_FILENAME=latest`
 The backup archive would be something like
 
 ```
-/backups/latest.gis.dmp
+/backups/gis_latest.dmp
 ```
 
 ## Backing up to S3 bucket
@@ -141,7 +141,7 @@ The script uses [s3cmd](https://s3tools.org/s3cmd) for backing up files to S3 bu
 
 You can read more about configuration options for [s3cmd](https://s3tools.org/s3cmd-howto)
 
-For a typical usage of this look at the [docker-compose-s3.yml](https://github.com/kartoza/docker-pg-backup/blob/master/docker-compose-s3.yml)
+For a typical usage of this look at the [docker-compose-s3.yml](https://github.com/goblet-lavandier/docker-pg-backup/blob/master/docker-compose-s3.yml)
 
 ## Mounting Configs
 
@@ -201,7 +201,7 @@ To restore from S3 bucket, first you have to exec into your running container. Y
 
 You can read more about configuration options for [s3cmd](https://s3tools.org/s3cmd-howto)
 
-For a typical usage of this look at the [docker-compose-s3.yml](https://github.com/kartoza/docker-pg-backup/blob/master/docker-compose-s3.yml)
+For a typical usage of this look at the [docker-compose-s3.yml](https://github.com/goblet-lavandier/docker-pg-backup/blob/master/docker-compose-s3.yml)
 
 
 ## Credits
