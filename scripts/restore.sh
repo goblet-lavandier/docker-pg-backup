@@ -1,9 +1,8 @@
 #!/bin/bash
 
-
-#!/bin/bash
-
 source /backup-scripts/pgenv.sh
+
+# Env variables
 POSTGRES_MAJOR_VERSION=$(cat /tmp/pg_version.txt)
 BIN_DIR="/usr/lib/postgresql/${POSTGRES_MAJOR_VERSION}/bin/"
 
@@ -31,7 +30,12 @@ else
 		MYBASEDIR=/${BUCKET}
 		MYBACKUPDIR=${MYBASEDIR}/${YEAR}/${MONTH}
 		BACKUP_URL=${MYBACKUPDIR}/${2}_${MYDATE}.dmp.gz
-		if [[ "$(s3cmd ls s3://${BACKUP_URL} | wc -l)" = 1 ]]; then 
+		echo "Restoring from s3://${BACKUP_URL}"
+		echo "MYDATE: ${MYDATE}"
+		echo "Param 1 [Date]: ${1}"
+		echo "Param 2 [Database]: ${2}"
+		echo "Param 3 [Not relevant]: ${3}"
+		if [[ "$(s3cmd ls s3://${BACKUP_URL} | wc -l)" = 1 ]]; then
 			s3cmd get s3://${BACKUP_URL} /data/dump/$2.dmp.gz
     	gunzip /data/dump/$2.dmp.gz
 			echo "delete target DB with if its exists and recreate it"
