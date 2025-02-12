@@ -20,36 +20,54 @@ function s3_config() {
 
 
 function s3_restore() {
- if [[ ! $1 || "$(date -d "$1" +%Y-%m-%d 2> /dev/null)" = "$3" ]]; then
-  		echo "invalid date"
-  		exit 1
-else
+  echo "Param 1 [Date]: ${1}"
+  echo "Param 2 [Database]: ${2}"
+
+  MYBASEDIR=/${BUCKET}
+
+  if [[ ! $1 || "$(date -d "$1" +%Y-%m-%dT%H:%M:%S 2> /dev/null)" = "$3" ]]; then
+    echo "It is not a valid date time: $1"
+    unset BACKUP_URL
+  else
+    echo "It a valid date time: $1"
     MYDATE=$(date -d "$1" +%Y%m%d_%H%M%S)
     MONTH=$(date -d "$1" +%m)
-		YEAR=$(date -d "$1" +%Y)
-		MYBASEDIR=/${BUCKET}
-		MYBACKUPDIR=${MYBASEDIR}/${YEAR}/${MONTH}
-		BACKUP_URL=${MYBACKUPDIR}/${2}_${MYDATE}.dmp.gz
-		echo "Restoring from s3://${BACKUP_URL}"
-		echo "MYDATE: ${MYDATE}"
-		echo "Param 1 [Date]: ${1}"
-		echo "Param 2 [Database]: ${2}"
-		echo "Param 3 [Not relevant]: ${3}"
-		if [[ "$(s3cmd ls s3://${BACKUP_URL} | wc -l)" = 1 ]]; then
-			s3cmd get s3://${BACKUP_URL} /data/dump/$2.dmp.gz
-    	gunzip /data/dump/$2.dmp.gz
-			echo "delete target DB with if its exists and recreate it"
-			export PGPASSWORD=${POSTGRES_PASSWORD}
-			${BIN_DIR}/dropdb ${PG_CONN_PARAMETERS} --force --if-exists ${2}
-			${BIN_DIR}/createdb ${PG_CONN_PARAMETERS} -O ${POSTGRES_USER} ${2}
-			if [[ "${DB_DUMP_ENCRYPTION}" =~ [Tt][Rr][Uu][Ee] ]];then
-			  openssl enc -d -aes-256-cbc -pass pass:${DB_DUMP_ENCRYPTION_PASS_PHRASE} -pbkdf2 -iter 10000 -md sha256 -in /data/dump/$2.dmp -out /tmp/decrypted.dump.gz | PGPASSWORD=${POSTGRES_PASSWORD} pg_restore ${PG_CONN_PARAMETERS} /tmp/decrypted.dump.gz  -d $2 ${RESTORE_ARGS}
-			  rm -r /tmp/decrypted.dump.gz
-			else
-			  ${BIN_DIR}/pg_restore ${PG_CONN_PARAMETERS} /data/dump/$2.dmp  -d $2 ${RESTORE_ARGS}
-			fi
-		fi
-	fi
+    YEAR=$(date -d "$1" +%Y)
+    MYBACKUPDIR=${MYBASEDIR}/${YEAR}/${MONTH}
+    BACKUP_URL=${MYBACKUPDIR}/${2}_${MYDATE}.dmp.gz
+  fi
+
+  if [ -z "${BACKUP_URL+x}" ]; then
+    echo "BACKUP_URL is not set, check if it is a relative path";
+    if [[ $1 && $1 =~ ^[0-9]{4}/[0-9]{2}/.+?$ ]]; then
+      echo "It a valid relative path: $1"
+      BACKUP_URL=${MYBASEDIR}/$1
+    else
+      echo "It is not a valid relative path: $1"
+      unset BACKUP_URL
+    fi
+  fi
+
+  if [ -z "${BACKUP_URL+x}" ]; then
+    echo "BACKUP_URL is not set, neither as a date nor as a relative path given";
+    exit 1
+  else
+    echo "Restoring from s3://${BACKUP_URL}"
+    if [[ "$(s3cmd ls s3://${BACKUP_URL} | wc -l)" = 1 ]]; then
+      s3cmd get s3://${BACKUP_URL} /data/dump/$2.dmp.gz
+      gunzip /data/dump/$2.dmp.gz
+      echo "delete target DB with if its exists and recreate it"
+      export PGPASSWORD=${POSTGRES_PASSWORD}
+      ${BIN_DIR}/dropdb ${PG_CONN_PARAMETERS} --force --if-exists ${2}
+      ${BIN_DIR}/createdb ${PG_CONN_PARAMETERS} -O ${POSTGRES_USER} ${2}
+      if [[ "${DB_DUMP_ENCRYPTION}" =~ [Tt][Rr][Uu][Ee] ]];then
+        openssl enc -d -aes-256-cbc -pass pass:${DB_DUMP_ENCRYPTION_PASS_PHRASE} -pbkdf2 -iter 10000 -md sha256 -in /data/dump/$2.dmp -out /tmp/decrypted.dump.gz | PGPASSWORD=${POSTGRES_PASSWORD} pg_restore ${PG_CONN_PARAMETERS} /tmp/decrypted.dump.gz  -d $2 ${RESTORE_ARGS}
+        rm -r /tmp/decrypted.dump.gz
+      else
+        ${BIN_DIR}/pg_restore ${PG_CONN_PARAMETERS} /data/dump/$2.dmp  -d $2 ${RESTORE_ARGS}
+      fi
+    fi
+  fi
 }
 
 function file_restore() {
